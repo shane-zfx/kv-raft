@@ -1,5 +1,6 @@
 package com.shane.example.log;
 
+import java.io.BufferedWriter;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -46,5 +47,6 @@ public class LogRandomWriter extends AbstractLogWriter {
     public static void main(String[] args) {
         LogRandomWriter logRandomWriter = new LogRandomWriter();
         logRandomWriter.write("", "");
+
     }
 }
