@@ -1,5 +1,7 @@
 package com.shane.example;
 
+import com.shane.example.core.role.AbstractRole;
+
 /**
  * @author Shane
  * @version 1.0
@@ -10,6 +12,10 @@ public class Node {
     public void start(){
         // 初始化为 follower
         this.role = 0;
+
+    }
+
+    public void roleChange(AbstractRole role){
 
     }
 }
