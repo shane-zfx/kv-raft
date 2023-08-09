@@ -1,7 +1,10 @@
 package com.shane.example.core.role;
 
 import com.shane.example.NodeEndpoint;
-import com.shane.example.core.ElectionTimer;
+import com.shane.example.core.ElectionTimeout;
+
+import java.time.LocalDateTime;
+import java.util.concurrent.*;
 
 /**
  * @author: shane
@@ -11,7 +14,7 @@ import com.shane.example.core.ElectionTimer;
 public class FollowerNode extends AbstractNodeRole{
 
 
-    private ElectionTimer electionTimer;
+    private ElectionTimeout electionTimeout;
 
     private NodeEndpoint votedFor;
 
@@ -22,7 +25,5 @@ public class FollowerNode extends AbstractNodeRole{
     public NodeEndpoint getVotedFor(){
         return this.votedFor;
     }
-
-
 
 }
