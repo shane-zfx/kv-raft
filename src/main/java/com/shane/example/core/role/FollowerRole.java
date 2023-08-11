@@ -15,8 +15,8 @@ public class FollowerRole extends AbstractRole {
 
     private NodeEndpoint votedFor;
 
-    public FollowerRole(Role roleName, int term) {
-        super(roleName, term);
+    public FollowerRole(/*Role roleName,*/ int term) {
+        super(/*roleName,*/ term);
     }
 
     public NodeEndpoint getVotedFor(){

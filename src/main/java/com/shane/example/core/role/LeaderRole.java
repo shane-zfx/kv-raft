@@ -7,7 +7,7 @@ package com.shane.example.core.role;
  */
 public class LeaderRole extends AbstractRole{
 
-    public LeaderRole(Role roleName, int term) {
-        super(roleName, term);
+    public LeaderRole(/*Role roleName,*/ int term) {
+        super(/*roleName,*/ term);
     }
 }

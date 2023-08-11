@@ -9,12 +9,12 @@ import com.shane.example.NodeEndpoint;
  */
 public abstract class AbstractRole {
 
-    private Role roleName;
+    //private Role roleName;
     private int term;
 
 
-    public AbstractRole(Role roleName, int term){
-        this.roleName = roleName;
+    public AbstractRole(/*Role roleName,*/ int term){
+        //this.roleName = roleName;
         this.term = term;
     }
 
