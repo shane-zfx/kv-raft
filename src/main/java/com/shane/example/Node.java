@@ -17,6 +17,7 @@ public class Node {
     }
 
     public void roleChange(AbstractRole role){
+        // 判断当前角色是否支持准换
 
     }
 }

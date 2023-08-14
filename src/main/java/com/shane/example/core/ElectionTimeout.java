@@ -29,6 +29,7 @@ public class ElectionTimeout {
     }
 
     public ElectionTimeout submit(Runnable task) {
+        // 选举及时器提交超时任务，开始计时
         int electionPeriod = MIN_ELECTION_PERIOD + random.nextInt(MAX_ELECTION_PERIOD - MIN_ELECTION_PERIOD);
         scheduledFuture = executor.schedule(task, electionPeriod, TimeUnit.MILLISECONDS);
         return this;
