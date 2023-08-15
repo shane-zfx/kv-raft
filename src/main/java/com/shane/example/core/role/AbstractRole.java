@@ -1,6 +1,7 @@
 package com.shane.example.core.role;
 
 import com.shane.example.NodeEndpoint;
+import com.shane.example.log.LogEntry;
 
 /**
  * @author: shane
@@ -10,12 +11,22 @@ import com.shane.example.NodeEndpoint;
 public abstract class AbstractRole {
 
     //private Role roleName;
-    private int term;
+    private int currentTerm;
+
+    private String votedFor;
+
+    private LogEntry[] logEntries;
+
+    private int commitIndex;
+
+    private int lastApplied;
+
+
 
 
     public AbstractRole(/*Role roleName,*/ int term){
         //this.roleName = roleName;
-        this.term = term;
+        this.currentTerm = term;
     }
 
     // 取消
@@ -24,6 +35,6 @@ public abstract class AbstractRole {
     }
 
     public synchronized int termIncr(){
-        return this.term++;
+        return this.currentTerm++;
     }
 }
