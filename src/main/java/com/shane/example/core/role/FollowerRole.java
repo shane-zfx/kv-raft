@@ -21,7 +21,12 @@ public class FollowerRole extends AbstractRole {
         super(/*roleName,*/ term);
     }
 
-    public NodeEndpoint getVotedFor(){
+    @Override
+    public void changeTo(AbstractRole to) {
+
+    }
+
+    public NodeEndpoint getVotedFor() {
         return this.votedFor;
     }
 

@@ -1,7 +1,6 @@
 package com.shane.example.core.role;
 
 import com.shane.example.NodeEndpoint;
-import com.shane.example.log.LogEntry;
 
 /**
  * @author: shane
@@ -13,18 +12,12 @@ public abstract class AbstractRole {
     //private Role roleName;
     private int currentTerm;
 
+    private int code;
+
     private String votedFor;
 
-    private LogEntry[] logEntries;
 
-    private int commitIndex;
-
-    private int lastApplied;
-
-
-
-
-    public AbstractRole(/*Role roleName,*/ int term){
+    public AbstractRole(/*Role roleName,*/ int term) {
         //this.roleName = roleName;
         this.currentTerm = term;
     }
@@ -34,7 +27,9 @@ public abstract class AbstractRole {
 
     }
 
-    public synchronized int termIncr(){
+    public synchronized int termIncr() {
         return this.currentTerm++;
     }
+
+    public abstract void changeTo(AbstractRole to);
 }
