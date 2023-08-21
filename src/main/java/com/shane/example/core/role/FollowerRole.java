@@ -12,40 +12,25 @@ import java.util.Objects;
  */
 public class FollowerRole extends AbstractRole {
 
+    private final String votedFor;
 
-    private ElectionTimeout electionTimeout;
+    private final String currentLeader;
 
-    private NodeEndpoint votedFor;
+    private final ElectionTimeout electionTimeout;
 
-    public FollowerRole(/*Role roleName,*/ int term) {
-        super(/*roleName,*/ term);
+    public FollowerRole(int role, int term,
+                        String votedFor,
+                        String currentLeader,
+                        ElectionTimeout electionTimeout) {
+        super(role, term);
+        this.votedFor = votedFor;
+        this.currentLeader = currentLeader;
+        this.electionTimeout = electionTimeout;
     }
 
     @Override
-    public void changeTo(AbstractRole to) {
-
+    public void cancelPreCycleTask() {
+        electionTimeout.cancel();
     }
 
-    public NodeEndpoint getVotedFor() {
-        return this.votedFor;
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        FollowerRole that = (FollowerRole) o;
-
-        if (!electionTimeout.equals(that.electionTimeout)) return false;
-        return Objects.equals(votedFor, that.votedFor);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = electionTimeout.hashCode();
-        result = 31 * result + (votedFor != null ? votedFor.hashCode() : 0);
-        return result;
-    }
 }

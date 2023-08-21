@@ -1,5 +1,6 @@
 package com.shane.example;
 
+import com.shane.example.core.ElectionTimeout;
 import com.shane.example.core.role.AbstractRole;
 import com.shane.example.core.role.FollowerRole;
 
@@ -10,14 +11,26 @@ import com.shane.example.core.role.FollowerRole;
  */
 public class Node {
     private int role;
+
+    private boolean started;
+
+    private ElectionTimeout electionTimer;
+
     public void start(){
+        if (started) {
+            return;
+        }
         // 初始化为 follower
         this.role = 0;
-        this.roleChange(new FollowerRole(0));
+        electionTimer = new ElectionTimeout();
+//        electionTimer.submit();
+        this.started = true;
     }
 
-    public void roleChange(AbstractRole role){
-        // 判断当前角色是否支持准换
-
+    private void followerTimeout() {
+        // 变换角色
+        // term + 1
+        // vote itself
+        //
     }
 }

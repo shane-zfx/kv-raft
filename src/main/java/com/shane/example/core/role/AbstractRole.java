@@ -9,27 +9,24 @@ import com.shane.example.NodeEndpoint;
  */
 public abstract class AbstractRole {
 
-    //private Role roleName;
-    private int currentTerm;
+    private final int role;
+    private final int currentTerm;
 
-    private int code;
-
-    private String votedFor;
-
-
-    public AbstractRole(/*Role roleName,*/ int term) {
-        //this.roleName = roleName;
+    public AbstractRole(int role, int term) {
+        this.role = role;
         this.currentTerm = term;
     }
 
-    // 取消
-    public void voteFor(NodeEndpoint endpoint) {
-
+    public int getRole() {
+        return this.role;
     }
 
-    public synchronized int termIncr() {
-        return this.currentTerm++;
+    public int getCurrentTerm() {
+        return this.currentTerm;
     }
 
-    public abstract void changeTo(AbstractRole to);
+    /**
+     * 每次角色变化，都需要重置超时任务
+     */
+    public abstract void cancelPreCycleTask();
 }
