@@ -18,6 +18,6 @@ public class LeaderRole extends AbstractRole {
 
     @Override
     public void cancelPreCycleTask() {
-        logReplicationScheduler.ca
+        logReplicationScheduler.cancel();
     }
 }
