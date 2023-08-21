@@ -20,9 +20,7 @@ public class CandidateRole extends AbstractRole {
      * @param electionTimeout new election timer
      */
     public CandidateRole(int term, ElectionTimeout electionTimeout) {
-        super(1, term);
-        this.totalVotes = 1;
-        this.electionTimeout = electionTimeout;
+        this(term, 1, electionTimeout);
     }
 
     public CandidateRole(int term, int totalVotes, ElectionTimeout electionTimeout) {

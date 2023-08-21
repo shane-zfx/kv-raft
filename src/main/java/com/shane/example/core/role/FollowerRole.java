@@ -19,10 +19,7 @@ public class FollowerRole extends AbstractRole {
     private final ElectionTimeout electionTimeout;
 
     public FollowerRole(String votedFor, String currentLeader, ElectionTimeout electionTimeout) {
-        super(2, 0);
-        this.votedFor = votedFor;
-        this.currentLeader = currentLeader;
-        this.electionTimeout = electionTimeout;
+        this(1, votedFor, currentLeader, electionTimeout);
     }
 
     public FollowerRole(int term, String votedFor, String currentLeader, ElectionTimeout electionTimeout) {
