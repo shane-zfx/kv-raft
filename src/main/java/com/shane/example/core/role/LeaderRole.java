@@ -1,5 +1,7 @@
 package com.shane.example.core.role;
 
+import com.shane.example.core.LogReplicationScheduler;
+
 /**
  * @author: shane
  * @date: 2023-08-09 17:44:10
@@ -7,12 +9,15 @@ package com.shane.example.core.role;
  */
 public class LeaderRole extends AbstractRole {
 
-    public LeaderRole(int term) {
+    private final LogReplicationScheduler logReplicationScheduler;
+
+    public LeaderRole(int term, LogReplicationScheduler logReplicationScheduler) {
         super(0, term);
+        this.logReplicationScheduler = logReplicationScheduler;
     }
 
     @Override
     public void cancelPreCycleTask() {
-
+        logReplicationScheduler.ca
     }
 }

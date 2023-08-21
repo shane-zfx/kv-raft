@@ -1,8 +1,6 @@
 package com.shane.example;
 
 import com.shane.example.core.ElectionTimeout;
-import com.shane.example.core.role.AbstractRole;
-import com.shane.example.core.role.FollowerRole;
 
 /**
  * @author Shane
@@ -22,7 +20,6 @@ public class Node {
         }
         // 初始化为 follower
         this.role = 0;
-        electionTimer = new ElectionTimeout();
 //        electionTimer.submit();
         this.started = true;
     }

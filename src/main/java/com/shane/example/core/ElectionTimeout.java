@@ -18,24 +18,34 @@ public class ElectionTimeout {
 
     private static final int MIN_ELECTION_PERIOD = 150;
     private static final int MAX_ELECTION_PERIOD = 300;
-    private final Random random = new Random();
-    private ScheduledExecutorService executor;
-    private ScheduledFuture<?> scheduledFuture;
+    private final ScheduledExecutorService executor;
+    private final ScheduledFuture<?> scheduledFuture;
 
 
-    public ElectionTimeout() {
+    public ElectionTimeout(Runnable task) {
+        this(task, MIN_ELECTION_PERIOD, MAX_ELECTION_PERIOD);
+    }
+
+    public ElectionTimeout(Runnable task, int minElectionPeriod, int maxElectionPeriod) {
         // 调度线程池
         executor = Executors.newSingleThreadScheduledExecutor();
-    }
-
-    public ElectionTimeout submit(Runnable task) {
         // 选举及时器提交超时任务，开始计时
-        int electionPeriod = MIN_ELECTION_PERIOD + random.nextInt(MAX_ELECTION_PERIOD - MIN_ELECTION_PERIOD);
+        int electionPeriod = minElectionPeriod + new Random().nextInt(maxElectionPeriod - minElectionPeriod);
         scheduledFuture = executor.schedule(task, electionPeriod, TimeUnit.MILLISECONDS);
-        return this;
     }
 
-    public boolean cancel(){
-        return scheduledFuture.cancel(false);
+    public void cancel() {
+        scheduledFuture.cancel(false);
+    }
+
+    @Override
+    public String toString() {
+        if (this.scheduledFuture.isCancelled()) {
+            return "ElectionTimeout{ state = cancelled }";
+        }
+        if (this.scheduledFuture.isDone()) {
+            return "ElectionTimeout{ state = done }";
+        }
+        return "ElectionTimeout{ delay = " + scheduledFuture.getDelay(TimeUnit.MILLISECONDS) + "ms } ";
     }
 }
