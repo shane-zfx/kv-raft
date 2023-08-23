@@ -1,9 +1,6 @@
 package com.shane.example.core.role;
 
-import com.shane.example.NodeEndpoint;
 import com.shane.example.core.ElectionTimeout;
-
-import java.util.Objects;
 
 /**
  * @author: shane

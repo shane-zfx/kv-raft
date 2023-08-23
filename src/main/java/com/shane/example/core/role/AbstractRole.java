@@ -1,7 +1,5 @@
 package com.shane.example.core.role;
 
-import com.shane.example.NodeEndpoint;
-
 /**
  * @author: shane
  * @date: 2023-08-08 15:44:56
