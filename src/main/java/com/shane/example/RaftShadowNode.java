@@ -1,6 +1,8 @@
 package com.shane.example;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * @author Shane
@@ -10,6 +12,20 @@ import java.io.Closeable;
 public interface RaftShadowNode extends Closeable {
 
     void start();
+
+    void stop();
+
+    /**
+     *
+     * @return
+     */
+    int getTerm();
+
+    int loadTerm(File file) throws IOException;
+
+    String getVotedFor();
+
+    String loadVotedFor(File file);
 
     void close();
 }
