@@ -4,13 +4,13 @@ import com.shane.example.core.ElectionTimeout;
 import com.shane.example.core.role.AbstractRole;
 import com.shane.example.core.role.FollowerRole;
 import com.shane.example.core.role.RoleEnum;
+import com.shane.example.core.rpc.Connector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.file.Files;
 
 /**
  * 在 raft 的影子节点中添加组件
@@ -38,6 +38,8 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
      */
     private AbstractRole role;
 
+    private Connector connector;
+
     private RandomAccessFile randomAccessFile;
 
 
@@ -58,6 +60,11 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         }
 
         int newTerm = this.term + 1;
+        // 取消旧一轮
+        role.cancelPreCycleTask();
+        LOGGER.info("start election");
+        // 变为 candidate
+        // 发送 rpc 消息
 
     }
 
