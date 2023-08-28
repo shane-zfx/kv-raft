@@ -11,8 +11,6 @@ public interface Connector extends Closeable {
 
     void start();
 
-    void close();
-
     RequestVoteResult sendRequestVoteRpc();
 
 
