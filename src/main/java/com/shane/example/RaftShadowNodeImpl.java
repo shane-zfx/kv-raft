@@ -1,6 +1,11 @@
 package com.shane.example;
 
+import com.shane.example.core.ElectionTimeout;
 import com.shane.example.core.role.AbstractRole;
+import com.shane.example.core.role.FollowerRole;
+import com.shane.example.core.role.RoleEnum;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,6 +20,12 @@ import java.nio.file.Files;
  * @date 2023-08-23 23:12
  */
 public class RaftShadowNodeImpl implements RaftShadowNode {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(RaftShadowNodeImpl.class);
+
+    int term;
+
+    String votedFor;
 
 
     /**
@@ -35,6 +46,18 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         if (started) {
             return;
         }
+        this.role = new FollowerRole(0, "", "", new ElectionTimeout(this::doElectionTimeoutTask));
+    }
+
+    private void doElectionTimeoutTask() {
+        // 检查当前角色
+        if(role.getRole() == RoleEnum.LEADER.getCode()){
+            //throw new IllegalStateException("illegal state exception");
+            LOGGER.warn("illegal state exception");
+            return;
+        }
+
+        int newTerm = this.term + 1;
 
     }
 
@@ -50,27 +73,32 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
     }
 
     @Override
-    public int loadTerm(File file) throws IOException {
+    public void loadTerm(File file) throws IOException {
         // 从文件中加载
-        if(!file.exists() && !file.createNewFile()){
-            throw new IllegalStateException("fail to touch file "+ file);
+        if (!file.exists() && !file.createNewFile()) {
+            throw new IllegalStateException("fail to touch file " + file);
         }
         randomAccessFile = new RandomAccessFile(file, "rw");
-        if(randomAccessFile.length() == 0){
+        if (randomAccessFile.length() == 0) {
             //
             randomAccessFile.setLength(8L);
             randomAccessFile.seek(0L);
             randomAccessFile.writeInt(0);
             randomAccessFile.writeInt(0);
-        }else {
-
+        } else {
+            this.term = randomAccessFile.readInt();
+            int len = randomAccessFile.readInt();
+            if (len > 0) {
+                byte[] bytes = new byte[len];
+                randomAccessFile.read(bytes);
+                this.votedFor = new String(bytes);
+            }
         }
-        return 0;
     }
 
     @Override
     public String getVotedFor() {
-        return null;
+        return this.votedFor;
     }
 
     @Override
@@ -80,10 +108,10 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
 
     @Override
     public void close() {
-
-    }
-
-    private void loadFromFile() {
-
+        try {
+            randomAccessFile.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

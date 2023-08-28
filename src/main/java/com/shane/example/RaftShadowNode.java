@@ -21,7 +21,7 @@ public interface RaftShadowNode extends Closeable {
      */
     int getTerm();
 
-    int loadTerm(File file) throws IOException;
+    void loadTerm(File file) throws IOException;
 
     String getVotedFor();
 
