@@ -1,6 +1,7 @@
 package com.shane.example.core.rpc;
 
 import java.io.Closeable;
+import java.util.Set;
 
 /**
  * @author: shane
@@ -11,7 +12,7 @@ public interface Connector extends Closeable {
 
     void start();
 
-    RequestVoteResult sendRequestVoteRpc();
+    void sendRequestVoteRpc(RequestVoteRPC rpc, Set<NodeEndpoint> dest);
 
-
+    void replyRequestVoteRpc(RequestVoteResult rpcRequest, NodeEndpoint dest);
 }

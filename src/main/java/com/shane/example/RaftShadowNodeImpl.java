@@ -5,12 +5,15 @@ import com.shane.example.core.role.AbstractRole;
 import com.shane.example.core.role.FollowerRole;
 import com.shane.example.core.role.RoleEnum;
 import com.shane.example.core.rpc.Connector;
+import com.shane.example.core.rpc.NodeEndpoint;
+import com.shane.example.core.rpc.RequestVoteRPC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.Set;
 
 /**
  * 在 raft 的影子节点中添加组件
@@ -40,6 +43,8 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
 
     private Connector connector;
 
+    private Set<NodeEndpoint> others;
+
     private RandomAccessFile randomAccessFile;
 
 
@@ -49,11 +54,12 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
             return;
         }
         this.role = new FollowerRole(0, "", "", new ElectionTimeout(this::doElectionTimeoutTask));
+        this.started = true;
     }
 
     private void doElectionTimeoutTask() {
         // 检查当前角色
-        if(role.getRole() == RoleEnum.LEADER.getCode()){
+        if (role.getRole() == RoleEnum.LEADER.getCode()) {
             //throw new IllegalStateException("illegal state exception");
             LOGGER.warn("illegal state exception");
             return;
@@ -65,7 +71,8 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         LOGGER.info("start election");
         // 变为 candidate
         // 发送 rpc 消息
-
+        RequestVoteRPC requestVoteRPC = new RequestVoteRPC(newTerm, "selfId", 0, 0);
+        connector.sendRequestVoteRpc(requestVoteRPC, others);
     }
 
     @Override
