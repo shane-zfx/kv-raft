@@ -14,18 +14,11 @@ public interface RaftShadowNode extends Closeable {
     void start();
 
     void stop();
-
-    /**
-     *
-     * @return
-     */
     int getTerm();
 
-    void loadTerm(File file) throws IOException;
 
     String getVotedFor();
 
-    String loadVotedFor(File file);
 
     void close();
 }
