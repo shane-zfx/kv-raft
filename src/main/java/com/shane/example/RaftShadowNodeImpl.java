@@ -11,8 +11,8 @@ import com.shane.example.core.rpc.RequestVoteRPC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import javax.print.attribute.standard.MediaSize;
-import javax.xml.bind.annotation.XmlList;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -65,6 +65,7 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         if (started) {
             return;
         }
+        // 节点当前状态初始化为 follower
         FollowerRole followerRole = new FollowerRole(0, "", "", new ElectionTimeout(this::doElectionTimeoutTask));
         this.role = followerRole;
         this.started = true;
@@ -84,7 +85,7 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         // 变为 candidate
         this.role = new CandidateRole(newTerm, null);
         // 发送 rpc 消息
-        RequestVoteRPC requestVoteRPC = new RequestVoteRPC(newTerm, "selfId", 0, 0);
+        RequestVoteRPC requestVoteRPC = new RequestVoteRPC(newTerm, null, 0, 0);
         connector.sendRequestVoteRpc(requestVoteRPC, cluster);
     }
 
