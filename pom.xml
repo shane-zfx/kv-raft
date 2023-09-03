@@ -6,7 +6,7 @@
 
     <groupId>com.shane.example</groupId>
     <artifactId>kv-raft</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.1-SNAPSHOT</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -33,6 +33,14 @@
             <artifactId>logback-core</artifactId>
             <version>1.2.11</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-all -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+            <version>4.1.97.Final</version>
+        </dependency>
+
     </dependencies>
 
 </project>

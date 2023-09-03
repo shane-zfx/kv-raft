@@ -8,13 +8,13 @@ package com.shane.example.core.rpc;
 public class RequestVoteRPC {
 
     private int term;
-    private String candidateId;
+    private String candidateEndpoint;
     private int lastLogIndex;
     private int lastLogTerm;
 
-    public RequestVoteRPC(int term, String candidateId, int lastLogIndex, int lastLogTerm) {
+    public RequestVoteRPC(int term, String candidateEndpoint, int lastLogIndex, int lastLogTerm) {
         this.term = term;
-        this.candidateId = candidateId;
+        this.candidateEndpoint = candidateEndpoint;
         this.lastLogIndex = lastLogIndex;
         this.lastLogTerm = lastLogTerm;
     }
