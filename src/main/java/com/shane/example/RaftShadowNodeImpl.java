@@ -6,17 +6,12 @@ import com.shane.example.core.role.CandidateRole;
 import com.shane.example.core.role.FollowerRole;
 import com.shane.example.core.role.RoleEnum;
 import com.shane.example.core.rpc.Connector;
-import com.shane.example.core.rpc.NodeEndpoint;
+import com.shane.example.core.rpc.Endpoint;
 import com.shane.example.core.rpc.RequestVoteRPC;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import javax.print.attribute.standard.MediaSize;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.time.temporal.ValueRange;
 import java.util.Set;
 
 /**
@@ -47,12 +42,12 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
 
     private Connector connector;
 
-    private Set<NodeEndpoint> cluster;
+    private Set<Endpoint> cluster;
 
     public RaftShadowNodeImpl(int term,
                               String votedFor,
                               Connector connector,
-                              Set<NodeEndpoint> cluster){
+                              Set<Endpoint> cluster){
         this.term = term;
         this.votedFor = votedFor;
         this.connector = connector;

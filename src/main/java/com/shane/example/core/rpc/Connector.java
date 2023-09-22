@@ -1,6 +1,10 @@
 package com.shane.example.core.rpc;
 
+import com.google.common.collect.Multimap;
+import com.shane.example.core.rpc.message.Message;
+
 import java.io.Closeable;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -10,9 +14,8 @@ import java.util.Set;
  */
 public interface Connector extends Closeable {
 
-    void start();
+    void send(Message msg, Endpoint destination);
+    void send(Message msg, List<Endpoint> destinationGroup);
 
-    void sendRequestVoteRpc(RequestVoteRPC rpc, Set<NodeEndpoint> dest);
-
-    void replyRequestVoteRpc(RequestVoteResult rpcRequest, NodeEndpoint dest);
+    void send(Multimap<String, Endpoint> multiSendInfo);
 }
