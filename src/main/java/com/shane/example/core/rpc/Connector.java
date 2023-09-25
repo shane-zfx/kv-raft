@@ -14,7 +14,8 @@ import java.util.Set;
  */
 public interface Connector extends Closeable {
 
-    void send(Message msg, Endpoint destination);
+    void initial(Set<Endpoint> destinationGroup);
+    void send(Message msg, Endpoint destination) throws InterruptedException;
     void send(Message msg, List<Endpoint> destinationGroup);
 
     void send(Multimap<String, Endpoint> multiSendInfo);

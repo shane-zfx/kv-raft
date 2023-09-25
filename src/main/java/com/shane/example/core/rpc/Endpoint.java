@@ -10,13 +10,21 @@ import java.util.Objects;
  * @version 1.0
  * @date 2023-08-28 21:09
  */
-public class Endpoint {
+public final class Endpoint {
     private final String host;
     private final int port;
 
     public Endpoint(String host, int port) {
         this.host = host;
         this.port = port;
+    }
+
+    public String getHost(){
+        return this.host;
+    }
+
+    public int getPort(){
+        return this.port;
     }
 
     @Override
