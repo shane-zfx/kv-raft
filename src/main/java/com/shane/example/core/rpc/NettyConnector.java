@@ -34,7 +34,9 @@ public class NettyConnector implements Connector {
 
     @Override
     public void initial(Set<Endpoint> destinationGroup) {
-
+        // 初始化服务端，建立与其他服务端连接
+        // 重试，防止其他节点服务端未初始化完成
+        // 重试之后还未建立连接，则放弃，在发送消息的时候会再次建立连接
     }
 
     @Override
