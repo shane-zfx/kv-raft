@@ -2,11 +2,15 @@ package com.shane.example.core.rpc;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
+import com.shane.example.core.rpc.message.Decoder;
+import com.shane.example.core.rpc.message.Encoder;
 import com.shane.example.core.rpc.message.Message;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,16 +31,39 @@ public class NettyConnector implements Connector {
 
     private Map<Endpoint, Channel> remoteConnectors = new ConcurrentHashMap<>();
 
+    private final Set<Endpoint> destinationGroup;
+    private final int port;
+
+    public NettyConnector(int port, Set<Endpoint> destinationGroup){
+        this.port = port;
+        this.destinationGroup = destinationGroup;
+    }
+
     @Override
     public void close() throws IOException {
+
 
     }
 
     @Override
-    public void initial(Set<Endpoint> destinationGroup) {
-        // 初始化服务端，建立与其他服务端连接
-        // 重试，防止其他节点服务端未初始化完成
-        // 重试之后还未建立连接，则放弃，在发送消息的时候会再次建立连接
+    public void initial() {
+        ServerBootstrap serverBootstrap = new ServerBootstrap()
+                .group(new NioEventLoopGroup(1), new NioEventLoopGroup(5))
+                .channel(NioServerSocketChannel.class)
+                .childHandler(new ChannelInitializer<SocketChannel>() {
+                    @Override
+                    protected void initChannel(SocketChannel socketChannel) throws Exception {
+                        ChannelPipeline pipeline = socketChannel.pipeline();
+//                        pipeline.addLast(new Decoder());
+//                        pipeline.addLast(new Encoder());
+//                        pipeline.addLast(new FromRemoteHandler());
+                    }
+                });
+        try {
+            serverBootstrap.bind(port).sync();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

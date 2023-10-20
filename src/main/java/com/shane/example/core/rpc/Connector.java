@@ -14,7 +14,7 @@ import java.util.Set;
  */
 public interface Connector extends Closeable {
 
-    void initial(Set<Endpoint> destinationGroup);
+    void initial();
     void send(Message msg, Endpoint destination) throws InterruptedException;
     void send(Message msg, List<Endpoint> destinationGroup);
 
