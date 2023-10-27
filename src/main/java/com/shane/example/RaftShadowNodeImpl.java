@@ -81,7 +81,7 @@ public class RaftShadowNodeImpl implements RaftShadowNode {
         this.role = new CandidateRole(newTerm, null);
         // 发送 rpc 消息
         RequestVoteRPC requestVoteRPC = new RequestVoteRPC(newTerm, null, 0, 0);
-        connector.sendRequestVoteRpc(requestVoteRPC, cluster);
+//         connector.sendRequestVoteRpc(requestVoteRPC, cluster);
     }
 
     @Override

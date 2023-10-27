@@ -1,7 +1,6 @@
 package com.shane.example.core.rpc.message;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author: shane
@@ -10,4 +9,10 @@ import java.util.Map;
  */
 public class Encoder {
 
+    public static void main(String[] args) {
+        String input = "camelCasing";
+        String string = input.chars().mapToObj(x -> !Character.isUpperCase(x) ? String.valueOf((char) x) : " " + (char) x).collect(Collectors.joining()).toString();
+        System.out.println(string);
+
+    }
 }
