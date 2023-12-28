@@ -11,7 +11,7 @@ public class T {
     public static void main(String[] args) {
         NettyConnector node2 = new NettyConnector(4000);
         node2.initial();
-        node2.send("你好.这里是4000号机器", new Endpoint("localhost", 8888));
+        // node2.send("你好.这里是4000号机器", new Endpoint("localhost", 8888));
 
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNextLine()) {

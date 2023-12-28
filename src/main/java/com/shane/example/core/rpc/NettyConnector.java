@@ -3,16 +3,7 @@ package com.shane.example.core.rpc;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelException;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -44,15 +35,19 @@ public class NettyConnector implements Connector {
     private static final Logger log = LoggerFactory.getLogger(NettyConnector.class);
 
     private final int port;
+    private int status = 0;
 
-    private Map<EndpointPair, Channel> channelMap = new ConcurrentHashMap<>();
+    private final Map<EndpointPair, Channel> channelMap = new ConcurrentHashMap<>();
 
     public NettyConnector(int port) {
         this.port = port;
     }
 
     @Override
-    public void initial() {
+    public synchronized void initial() {
+        if (status != 0) {
+            return;
+        }
         ServerBootstrap serverBootstrap = new ServerBootstrap()
                 .group(new NioEventLoopGroup(1), new NioEventLoopGroup(5))
                 .channel(NioServerSocketChannel.class)
@@ -102,7 +97,8 @@ public class NettyConnector implements Connector {
                     }
                 });
         try {
-            serverBootstrap.bind(this.port).sync();
+            ChannelFuture sync = serverBootstrap.bind(this.port).sync();
+            this.status = 1;
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -195,7 +191,6 @@ public class NettyConnector implements Connector {
         NettyConnector node1 = new NettyConnector(8888);
         // 节点 1 8888启用监听
         node1.initial();
-
         Scanner scanner = new Scanner(System.in);
         while (scanner.hasNextLine()) {
             String s = scanner.nextLine();
