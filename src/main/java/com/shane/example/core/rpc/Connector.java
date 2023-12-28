@@ -5,7 +5,7 @@ import com.shane.example.core.rpc.message.Message;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.Set;
+import java.util.Objects;
 
 /**
  * @author: shane
@@ -14,9 +14,12 @@ import java.util.Set;
  */
 public interface Connector extends Closeable {
 
+    /**
+     * 创建 rpc 监听端点
+     */
     void initial();
-    void send(Message msg, Endpoint destination) throws InterruptedException;
-    void send(Message msg, List<Endpoint> destinationGroup);
 
-    void send(Multimap<String, Endpoint> multiSendInfo);
+    void send(Object msg, Endpoint endpoint);
+
+    void close();
 }

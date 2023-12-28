@@ -1,26 +1,40 @@
 package com.shane.example.core.rpc;
 
-import com.google.common.collect.Maps;
-import com.google.common.collect.Multimap;
-import com.shane.example.core.rpc.message.Decoder;
-import com.shane.example.core.rpc.message.Encoder;
-import com.shane.example.core.rpc.message.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
-import io.netty.channel.*;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelException;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.ByteToMessageDecoder;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * rpc 组件，通过监听指定的端口，获取入站消息，并且可以跟指定的端点发送消息
+ *
  * @author: shane
  * @date: 2023-08-29 10:18:04
  * @version: 1.0
@@ -29,20 +43,12 @@ public class NettyConnector implements Connector {
 
     private static final Logger log = LoggerFactory.getLogger(NettyConnector.class);
 
-    private Map<Endpoint, Channel> remoteConnectors = new ConcurrentHashMap<>();
-
-    private final Set<Endpoint> destinationGroup;
     private final int port;
 
-    public NettyConnector(int port, Set<Endpoint> destinationGroup){
+    private Map<EndpointPair, Channel> channelMap = new ConcurrentHashMap<>();
+
+    public NettyConnector(int port) {
         this.port = port;
-        this.destinationGroup = destinationGroup;
-    }
-
-    @Override
-    public void close() throws IOException {
-
-
     }
 
     @Override
@@ -54,49 +60,146 @@ public class NettyConnector implements Connector {
                     @Override
                     protected void initChannel(SocketChannel socketChannel) throws Exception {
                         ChannelPipeline pipeline = socketChannel.pipeline();
-//                        pipeline.addLast(new Decoder());
-//                        pipeline.addLast(new Encoder());
-//                        pipeline.addLast(new FromRemoteHandler());
+                        pipeline.addLast(new ByteToMessageDecoder() {
+                            @Override
+                            protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> list) throws Exception {
+                                int readableBytes = in.readableBytes();
+                                if (readableBytes == 0) {
+                                    return;
+                                }
+
+                                try {
+                                    byte[] bytes = new byte[readableBytes];
+                                    in.readBytes(bytes);
+                                    String decodedString = new String(bytes, StandardCharsets.UTF_8);
+
+                                    list.add(decodedString);
+                                } catch (Exception ex) {
+                                    throw new DecoderException("Failed to decode message", ex);
+                                }
+                            }
+                        });
+                        // 将监听到的连接请求，放到入站channel组里
+                        pipeline.addLast(new MessageToByteEncoder<String>() {
+                            @Override
+                            protected void encode(ChannelHandlerContext channelHandlerContext, String msg, ByteBuf byteBuf) throws Exception {
+                                byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
+                            }
+                        });
+
+                        pipeline.addLast(new ChannelDuplexHandler() {
+
+
+                            @Override
+                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                System.out.println(msg);
+                                Channel channel = ctx.channel();
+                                InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
+
+                                channelMap.put(new EndpointPair(new Endpoint(socketAddress), new Endpoint(InetAddress.getLocalHost().toString(), port)), channel);
+                            }
+                        });
                     }
                 });
         try {
-            serverBootstrap.bind(port).sync();
+            serverBootstrap.bind(this.port).sync();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Override
-    public void send(Message msg, Endpoint destination) throws InterruptedException {
-        // 获取 dest 对应的 channel
-        // 通过 channel 发送消息
-        Channel channel = remoteConnectors.get(destination);
-        if (channel != null) {
-
+    public void send(Object msg, Endpoint endpoint) {
+        EndpointPair endpointPair = null;
+        try {
+             endpointPair = new EndpointPair(new Endpoint(InetAddress.getLocalHost().getHostAddress(), port), endpoint);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
         }
-        // 没有则创建，并放到 map 中去
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(new NioEventLoopGroup());
-        bootstrap.option(ChannelOption.TCP_NODELAY, true)
-                .handler(new ChannelInitializer<SocketChannel>() {
-                    @Override
-                    protected void initChannel(SocketChannel ch) throws Exception {
-                        ChannelPipeline pipeline = ch.pipeline();
-                        // todo
-                        pipeline.addLast();
-                    }
-                });
-        ChannelFuture channelFuture = bootstrap.connect(destination.getHost(), destination.getPort()).sync();
-
+        if (channelMap.containsKey(endpointPair)) {
+            Channel channel = channelMap.get(endpointPair);
+            String string = channel.remoteAddress().toString();
+            System.out.println("存在连接" + endpoint.toString() + "是来自" + string + "的连接");
+        }
+        Channel channel = channelMap.computeIfAbsent(endpointPair, x -> {
+            Bootstrap bootstrap = new Bootstrap()
+                    .group(new NioEventLoopGroup(5))
+                    .channel(NioSocketChannel.class)
+                    .option(ChannelOption.TCP_NODELAY, true)
+                    .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 1000)
+                    .handler(new ChannelInitializer<SocketChannel>() {
+                        @Override
+                        protected void initChannel(SocketChannel ch) throws Exception {
+                            ChannelPipeline pipeline = ch.pipeline();
+                            pipeline.addLast(new ByteToMessageDecoder() {
+                                @Override
+                                protected void decode(ChannelHandlerContext channelHandlerContext, ByteBuf in, List<Object> list) throws Exception {
+                                    int readableBytes = in.readableBytes();
+                                    if (readableBytes == 0) {
+                                        return;
+                                    }
+                                    try {
+                                        byte[] bytes = new byte[readableBytes];
+                                        in.readBytes(bytes);
+                                        String decodedString = new String(bytes, StandardCharsets.UTF_8);
+                                        list.add(decodedString);
+                                    } catch (Exception ex) {
+                                        throw new DecoderException("Failed to decode message", ex);
+                                    }
+                                }
+                            });
+                            pipeline.addLast(new MessageToByteEncoder<String>() {
+                                @Override
+                                protected void encode(ChannelHandlerContext channelHandlerContext, String msg, ByteBuf byteBuf) throws Exception {
+                                    byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
+                                }
+                            });
+                            pipeline.addLast(new ChannelDuplexHandler() {
+                                @Override
+                                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                                    System.out.println(msg);
+                                    Channel channel = ctx.channel();
+                                    InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
+                                    channelMap.put(new EndpointPair(new Endpoint(socketAddress), new Endpoint(InetAddress.getLocalHost().toString(), port)), channel);
+                                }
+                            });
+                        }
+                    });
+            ChannelFuture future = null;
+            try {
+                future = bootstrap.connect(endpoint.getHost(), endpoint.getPort()).sync();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            if (!future.isSuccess()) {
+                throw new ChannelException("failed to connect", future.cause());
+            }
+//            log.debug("channel OUTBOUND-{} connected", endpoint);
+            Channel nettyChannel = future.channel();
+            nettyChannel.closeFuture().addListener((ChannelFutureListener) cf -> {
+                log.debug("channel OUTBOUND-{} disconnected", endpoint);
+                channelMap.remove(endpoint);
+            });
+            return nettyChannel;
+        });
+        channel.writeAndFlush(msg);
     }
 
     @Override
-    public void send(Message msg, List<Endpoint> destinationGroup) {
+    public void close() {
+
 
     }
 
-    @Override
-    public void send(Multimap<String, Endpoint> multiSendInfo) {
+    public static void main(String[] args) throws InterruptedException {
+        NettyConnector node1 = new NettyConnector(8888);
+        // 节点 1 8888启用监听
+        node1.initial();
 
+        Scanner scanner = new Scanner(System.in);
+        while (scanner.hasNextLine()) {
+            String s = scanner.nextLine();
+            node1.send(s, new Endpoint("localhost", 4000));
+        }
     }
 }

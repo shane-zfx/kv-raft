@@ -1,6 +1,7 @@
 package com.shane.example.core.rpc;
 
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.InterfaceAddress;
 import java.util.Objects;
@@ -17,6 +18,18 @@ public final class Endpoint {
     public Endpoint(String host, int port) {
         this.host = host;
         this.port = port;
+    }
+
+    public Endpoint(InetSocketAddress socketAddress) {
+        this.host = socketAddress.getHostString();
+        this.port = socketAddress.getPort();
+    }
+
+    public static Endpoint trans(InetSocketAddress socketAddress){
+        return new Endpoint(socketAddress.getHostString(), socketAddress.getPort());
+    }
+    public InetSocketAddress convert(){
+        return new InetSocketAddress(host, port);
     }
 
     public String getHost(){
@@ -37,7 +50,7 @@ public final class Endpoint {
         if (this == o) return true;
         if (!(o instanceof Endpoint)) return false;
         Endpoint endpoint = (Endpoint) o;
-        return Objects.equals(host, endpoint.host) && Objects.equals(port, endpoint.port);
+        return Objects.equals(host, endpoint.getHost()) && Objects.equals(port, endpoint.getPort());
     }
 
     @Override
