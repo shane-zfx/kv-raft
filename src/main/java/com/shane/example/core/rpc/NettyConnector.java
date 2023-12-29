@@ -3,7 +3,15 @@ package com.shane.example.core.rpc;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.*;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelException;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.ChannelPipeline;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
@@ -15,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -30,7 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @date: 2023-08-29 10:18:04
  * @version: 1.0
  */
-public class NettyConnector implements Connector {
+public class NettyConnector<T> implements Connector<T> {
 
     private static final Logger log = LoggerFactory.getLogger(NettyConnector.class);
 
@@ -39,8 +46,18 @@ public class NettyConnector implements Connector {
 
     private final Map<EndpointPair, Channel> channelMap = new ConcurrentHashMap<>();
 
+    private int workers;
+
+    private NioEventLoopGroup workerGroup;
+
     public NettyConnector(int port) {
+        this(port, 5);
+    }
+
+    public NettyConnector(int port, int workers) {
         this.port = port;
+        this.workers = workers;
+        workerGroup = new NioEventLoopGroup(this.workers);
     }
 
     @Override
@@ -49,7 +66,7 @@ public class NettyConnector implements Connector {
             return;
         }
         ServerBootstrap serverBootstrap = new ServerBootstrap()
-                .group(new NioEventLoopGroup(1), new NioEventLoopGroup(5))
+                .group(new NioEventLoopGroup(1), workerGroup)
                 .channel(NioServerSocketChannel.class)
                 .childHandler(new ChannelInitializer<SocketChannel>() {
                     @Override
@@ -74,26 +91,13 @@ public class NettyConnector implements Connector {
                                 }
                             }
                         });
-                        // 将监听到的连接请求，放到入站channel组里
                         pipeline.addLast(new MessageToByteEncoder<String>() {
                             @Override
                             protected void encode(ChannelHandlerContext channelHandlerContext, String msg, ByteBuf byteBuf) throws Exception {
                                 byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
                             }
                         });
-
-                        pipeline.addLast(new ChannelDuplexHandler() {
-
-
-                            @Override
-                            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                                System.out.println(msg);
-                                Channel channel = ctx.channel();
-                                InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
-
-                                channelMap.put(new EndpointPair(new Endpoint(socketAddress), new Endpoint(InetAddress.getLocalHost().toString(), port)), channel);
-                            }
-                        });
+                        pipeline.addLast(new ChannelProcessor());
                     }
                 });
         try {
@@ -105,10 +109,10 @@ public class NettyConnector implements Connector {
     }
 
     @Override
-    public void send(Object msg, Endpoint endpoint) {
+    public void send(T msg, Endpoint endpoint) {
         EndpointPair endpointPair = null;
         try {
-             endpointPair = new EndpointPair(new Endpoint(InetAddress.getLocalHost().getHostAddress(), port), endpoint);
+            endpointPair = new EndpointPair(new Endpoint(InetAddress.getLocalHost().getHostAddress(), port), endpoint);
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
@@ -119,7 +123,7 @@ public class NettyConnector implements Connector {
         }
         Channel channel = channelMap.computeIfAbsent(endpointPair, x -> {
             Bootstrap bootstrap = new Bootstrap()
-                    .group(new NioEventLoopGroup(5))
+                    .group(workerGroup)
                     .channel(NioSocketChannel.class)
                     .option(ChannelOption.TCP_NODELAY, true)
                     .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 1000)
@@ -150,15 +154,7 @@ public class NettyConnector implements Connector {
                                     byteBuf.writeBytes(msg.getBytes(StandardCharsets.UTF_8));
                                 }
                             });
-                            pipeline.addLast(new ChannelDuplexHandler() {
-                                @Override
-                                public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-                                    System.out.println(msg);
-                                    Channel channel = ctx.channel();
-                                    InetSocketAddress socketAddress = (InetSocketAddress) channel.remoteAddress();
-                                    channelMap.put(new EndpointPair(new Endpoint(socketAddress), new Endpoint(InetAddress.getLocalHost().toString(), port)), channel);
-                                }
-                            });
+                            pipeline.addLast(new ChannelProcessor());
                         }
                     });
             ChannelFuture future = null;
@@ -170,7 +166,6 @@ public class NettyConnector implements Connector {
             if (!future.isSuccess()) {
                 throw new ChannelException("failed to connect", future.cause());
             }
-//            log.debug("channel OUTBOUND-{} connected", endpoint);
             Channel nettyChannel = future.channel();
             nettyChannel.closeFuture().addListener((ChannelFutureListener) cf -> {
                 log.debug("channel OUTBOUND-{} disconnected", endpoint);
@@ -182,10 +177,41 @@ public class NettyConnector implements Connector {
     }
 
     @Override
+    public void send(T msg, List<Endpoint> EndpointGroup) {
+
+    }
+
+    @Override
     public void close() {
 
 
     }
+
+    private class ChannelProcessor extends ChannelDuplexHandler {
+
+        /**
+         * 当前服务节点，如果是客户端，则使用该节点作为端点
+         * 不为空时，则适用
+         */
+        private Endpoint cNode;
+
+        @Override
+        public void channelActive(ChannelHandlerContext ctx) throws Exception {
+
+        }
+
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+            System.out.println(msg);
+        }
+
+        public ChannelProcessor(){}
+
+        public ChannelProcessor(Endpoint cNode){
+            this.cNode = cNode;
+        }
+    }
+
 
     public static void main(String[] args) throws InterruptedException {
         NettyConnector node1 = new NettyConnector(8888);
