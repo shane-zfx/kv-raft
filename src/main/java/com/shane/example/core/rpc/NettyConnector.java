@@ -46,6 +46,9 @@ public class NettyConnector<T> implements Connector<T> {
 
     private final Map<EndpointPair, Channel> channelMap = new ConcurrentHashMap<>();
 
+    /**
+     * 工作线程数
+     */
     private int workers;
 
     private NioEventLoopGroup workerGroup;
@@ -209,18 +212,6 @@ public class NettyConnector<T> implements Connector<T> {
 
         public ChannelProcessor(Endpoint cNode){
             this.cNode = cNode;
-        }
-    }
-
-
-    public static void main(String[] args) throws InterruptedException {
-        NettyConnector node1 = new NettyConnector(8888);
-        // 节点 1 8888启用监听
-        node1.initial();
-        Scanner scanner = new Scanner(System.in);
-        while (scanner.hasNextLine()) {
-            String s = scanner.nextLine();
-            node1.send(s, new Endpoint("localhost", 4000));
         }
     }
 }
